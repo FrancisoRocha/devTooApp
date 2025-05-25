@@ -1,11 +1,16 @@
 import html from './app.html?raw';
-import todoStore from '../store/todo.store';
-import { renderTodos } from './use-cases';
+import todoStore, { Filters } from '../store/todo.store';
+import { renderPendingTodos, renderTodos } from './use-cases';
+import deleteCompleted from '../store/todo.store';
+
 
 const ElementIDs = {
     TodoList: '.todo-list',
     NewTodoInput: '#new-todo-input',
     Destroy: '.destroy',
+    ClearCompletd: '.clear-completed',
+    TodoFilters: '.filtro',
+    PendingCount: '#pending-count', 
 }
 
 /**
@@ -18,6 +23,11 @@ export const App = ( elementId ) => {
     const displayTodos = () => {
         const todos = todoStore.getTodos( todoStore.getCurrentFilter() );
         renderTodos( ElementIDs.TodoList, todos )
+        updatePendingCount();
+    }
+
+    const updatePendingCount = () => {
+        renderPendingTodos( ElementIDs.PendingCount );
     }
 
     // Cuando la funcion App() se llama
@@ -32,6 +42,8 @@ export const App = ( elementId ) => {
     const newDescriptionInput = document.querySelector( ElementIDs.NewTodoInput );
     const todoListUl = document.querySelector( ElementIDs.TodoList );
     const destroyButtons = document.querySelector( ElementIDs.Destroy );
+    const cleatCompletdButton = document.querySelector( ElementIDs.ClearCompletd );
+    const filtersLIs = document.querySelectorAll( ElementIDs.TodoFilters )
 
     // Listeners
     newDescriptionInput.addEventListener('keyup', ( event ) => {
@@ -55,6 +67,34 @@ export const App = ( elementId ) => {
             todoStore.deleteTodo( element.getAttribute('data-id'))
             displayTodos();
         }
+    });
+
+    cleatCompletdButton.addEventListener('click', () => {
+        //console.log('Borrar')
+        todoStore.deleteCompleted();
+        displayTodos();
+    })
+
+    filtersLIs.forEach( element => {
+
+        element.addEventListener('click', (element) => {
+
+            filtersLIs.forEach( el => el.classList.remove('selected') );
+            element.target.classList.add('selected');
+
+            switch( element.target.text){
+                case 'Todos':
+                    todoStore.setFilter( Filters.All )
+                break;
+                case 'Pendientes':
+                    todoStore.setFilter( Filters.Pending )
+                break;
+                case 'Completados':
+                    todoStore.setFilter( Filters.Completed )
+                break;
+            }
+            displayTodos();
+        });
     });
 
 }
